@@ -15,13 +15,13 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::post('register', [PassportAuthController::class, 'register']);
-Route::post('login', [PassportAuthController::class, 'login']);
+Route::post('/register', [PassportAuthController::class, 'register']);
+Route::post('/login', [PassportAuthController::class, 'login']);
 
 Route::middleware('auth:api')->group(function () {
     Route::resource('articles', 'ArticleController');
+    Route::resource('categories', 'CategoryController');
+    
+    Route::post('/logout', [PassportAuthController::class, 'logout']);
 });
 
-Route::middleware('auth:api')->group(function () {
-    Route::resource('categories', 'CategoryController');
-});

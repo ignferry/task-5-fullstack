@@ -17,12 +17,21 @@ class Article extends Model
         'category_id',
     ];
 
+    public function scopeFilter($query, array $filters)
+    {
+        $query->when($filters['user_id'] ?? false, function($query, $user_id) {
+            return $query->whereHas('user_id', function($query) use ($user_id) {
+                $query->where('user_id', $user_id);
+            });
+        });
+    }
+
     public function category() 
     {
         return $this->belongsTo(Category::class, 'category_id');
     }
 
-    public function user()
+    public function user_id()
     {
         return $this->belongsTo(User::class, 'user_id');
     }

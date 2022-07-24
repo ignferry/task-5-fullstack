@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Models\Article;
 use App\Http\Resources\ArticleResource;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\StoreArticleRequest;
 use App\Http\Requests\UpdateArticleRequest;
 
@@ -16,18 +18,19 @@ class ArticleController extends BaseController
      */
     public function index()
     {
-        $articles = Article::all();
-        return $this->sendResponse(ArticleResource::collection($articles), 'Articles retrieved successfully');
-    }
+        $articles = Article::select(
+            'id',
+            'title',
+            'image',
+            'user_id',
+            'category_id',
+            'created_at',
+        )->latest()
+        ->filter(request(['user_id']))
+        ->paginate(9)
+        ->withQueryString();
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        
+        return $this->sendResponse($articles, 'Articles retrieved successfully');
     }
 
     /**
@@ -38,7 +41,31 @@ class ArticleController extends BaseController
      */
     public function store(StoreArticleRequest $request)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'content' => 'required',
+            'image' => 'image|file|max:2048',
+            'category_id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError('Validation Error', $validator->errors(), 400);
+        }
+
+        $validatedData = [
+            'title' => $request->title,
+            'content' => $request->content,
+            'author' => auth()->user()->id,
+            'category_id' => $request->category_id,
+        ];
+
+        if($request->file('image')) {
+            $validatedData['image'] = $request->file('image')->store('article-images');
+        }
+
+        Article::create($validatedData);
+
+        return $this->sendResponse([], 'Article created successfully');
     }
 
     /**
@@ -49,18 +76,7 @@ class ArticleController extends BaseController
      */
     public function show(Article $article)
     {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Article  $article
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Article $article)
-    {
-        //
+        return $this->sendResponse($article, 'Article retrieved successfully');
     }
 
     /**
@@ -72,7 +88,34 @@ class ArticleController extends BaseController
      */
     public function update(UpdateArticleRequest $request, Article $article)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'content' => 'required',
+            'image' => 'image|file|max:2048',
+            'category_id' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError('Validation Error', $validator->errors(), 400);
+        }
+
+        $validatedData = [
+            'title' => $request->title,
+            'content' => $request->content,
+            'user_id' => $article->user_id,
+            'category_id' => $request->category_id,
+        ];
+
+        if($request->file('image')) {
+            if ($article->image) {
+                Storage::delete($article->image);
+            }
+            $validatedData['image'] = $request->file('image')->store('article-images');
+        }
+
+        Article::where('id', $article->id)->update($validatedData);
+
+        return $this->sendResponse([], 'Article updated successfully');
     }
 
     /**
@@ -83,6 +126,12 @@ class ArticleController extends BaseController
      */
     public function destroy(Article $article)
     {
-        //
+        if ($article->image) {
+            Storage::delete($article->image);
+        }
+
+        $article->delete();
+
+        return $this->sendResponse([], 'Article deleted successfully');
     }
 }

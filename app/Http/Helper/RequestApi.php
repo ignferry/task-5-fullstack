@@ -1,19 +1,12 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Helper;
 
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Foundation\Bus\DispatchesJobs;
-use Illuminate\Foundation\Validation\ValidatesRequests;
-use Illuminate\Routing\Controller as BaseController;
-
-class Controller extends BaseController
+class RequestApi
 {
-    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
-
     const API_URL = "http:/task-5-fullstack.test/api/V1/";
 
-    public function callAPI($method, $url, $data = [], $auth = false) {
+    public static function callAPI($method, $url, $data = [], $auth = false) {
         $ch = curl_init(self::API_URL . $url);
 
         switch($method) {

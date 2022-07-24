@@ -12,10 +12,9 @@ class PassportAuthController extends BaseController
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required',
-            'email' => 'required|email:dns|unique:users',
-            'password' => 'required|min:6',
-            'confirm_password' => 'required|same:password',
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
         ]);
 
         if ($validator->fails()) {
@@ -26,18 +25,17 @@ class PassportAuthController extends BaseController
             'name' => $request->name,
             'email' => $request->email,
             'password' => bcrypt($request->password),
+            'type' => 0
         ]);
 
-        $token = $user->createToken('RakaminBlog')->accessToken;
-
-        return $this->sendResponse(['token' => $token], 'Registration successful');
+        return $this->sendResponse([], 'Registration successful');
     }
 
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required',
-            'password' => 'required|min:6',
+            'password' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -54,7 +52,14 @@ class PassportAuthController extends BaseController
             return $this->sendResponse(['token' => $token], 'Login successful');
         }
         else {
-            return $this->sendError('Unauthorized', [], 401);
+            return $this->sendError('Invalid Credentials', ['message' => 'Invalid Credentials']);
         }
+    }
+
+    public function logout(Request $request)
+    {
+        $token = $request->user()->token();
+        $token->revoke();
+        return $this->sendResponse([], 'Logout succesful');
     }
 }
