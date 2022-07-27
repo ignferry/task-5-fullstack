@@ -17,11 +17,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [PassportAuthController::class, 'register']);
 Route::post('/login', [PassportAuthController::class, 'login']);
+Route::resource('articles', 'ArticleController')->only(['index', 'show']);
+Route::resource('categories', 'CategoryController')->only(['index', 'show']);
 
 Route::middleware('auth:api')->group(function () {
-    Route::resource('articles', 'ArticleController');
-    Route::resource('categories', 'CategoryController');
-    
     Route::post('/logout', [PassportAuthController::class, 'logout']);
+    Route::resource('articles', 'ArticleController')->only(['store', 'update', 'destroy']);
+    Route::resource('categories', 'CategoryController')->only(['store', 'update', 'destroy'])->middleware('api.admin');
 });
 

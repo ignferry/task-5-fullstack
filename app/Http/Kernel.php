@@ -66,5 +66,6 @@ class Kernel extends HttpKernel
         'api.admin' => \App\Http\Middleware\AdminAuth::class,
         'api.authtoken' => \App\Http\Middleware\ApiAuthToken::class,
         'api.revoketoken' => \App\Http\Middleware\ApiRevokeToken::class,
+        'admin' => \App\Http\Middleware\Admin::class
     ];
 }

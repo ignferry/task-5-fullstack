@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Models\Article;
+use Illuminate\Http\Request;
 use App\Http\Resources\ArticleResource;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -19,13 +20,8 @@ class ArticleController extends BaseController
     public function index()
     {
         $articles = Article::select(
-            'id',
-            'title',
-            'image',
-            'user_id',
-            'category_id',
-            'created_at',
-        )->latest()
+            'id', 'title', 'image', 'user_id', 'category_id', 'created_at'
+        )
         ->filter(request(['user_id']))
         ->paginate(9)
         ->withQueryString();
@@ -39,8 +35,12 @@ class ArticleController extends BaseController
      * @param  \App\Http\Requests\StoreArticleRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreArticleRequest $request)
+    public function store(Request $request)
     {
+        if (auth('api')->user()->id != $request->user_id) {
+            return $this->sendError('Permission Denied', [], 401);
+        }
+
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'content' => 'required',
@@ -55,7 +55,7 @@ class ArticleController extends BaseController
         $validatedData = [
             'title' => $request->title,
             'content' => $request->content,
-            'author' => auth()->user()->id,
+            'user_id' => $request->user_id,
             'category_id' => $request->category_id,
         ];
 
@@ -86,8 +86,12 @@ class ArticleController extends BaseController
      * @param  \App\Models\Article  $article
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateArticleRequest $request, Article $article)
+    public function update(Request $request, Article $article)
     {
+        if (auth('api')->user()->id != $article->user_id && auth('api')->user()->type == 0) {
+            return $this->sendError('Permission Denied', [], 401);
+        }
+
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'content' => 'required',
@@ -126,6 +130,10 @@ class ArticleController extends BaseController
      */
     public function destroy(Article $article)
     {
+        if (auth('api')->user()->id != $article->user_id && auth('api')->user()->type == 0) {
+            return $this->sendError('Permission Denied', [], 401);
+        }
+
         if ($article->image) {
             Storage::delete($article->image);
         }

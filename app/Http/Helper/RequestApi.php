@@ -17,9 +17,9 @@ class RequestApi
                 }
                 break;
             case 'PUT':
-                curl_setopt($ch, CURLOPT_PUT, 1);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
                 if ($data) {
-                    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
                 }
                 break;
             case 'DELETE':
@@ -28,12 +28,14 @@ class RequestApi
                 curl_setopt($ch, CURLOPT_HTTPGET, 1);
                 if ($data) {
                     $url = sprintf("%s?%s", $url, http_build_query($data));
+                    curl_setopt($ch, CURLOPT_URL, self::API_URL . $url);
                 }
         }
 
         $header = ["Accept: application/json"];
         if ($auth) {
-            array_push($header, "Authorization: Bearer ");
+            $token = request()->cookie('token');
+            array_push($header, "Authorization: Bearer ". $token);
         }
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -42,6 +44,6 @@ class RequestApi
 
         curl_close($ch);
 
-        return json_decode($response, true);
+        return json_decode($response);
     }
 }

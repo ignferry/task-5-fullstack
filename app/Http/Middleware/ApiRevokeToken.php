@@ -18,7 +18,7 @@ class ApiRevokeToken
      */
     public function handle(Request $request, Closure $next)
     {
-        $attempt = RequestApi::callAPI('POST', 'logout');
+        $attempt = RequestApi::callAPI('POST', 'logout', [], true);
 
         $cookie = Cookie::forget('token');
 

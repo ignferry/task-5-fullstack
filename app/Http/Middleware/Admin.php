@@ -4,10 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use App\Http\Helper\RequestApi;
-use Illuminate\Support\Facades\Cookie;
 
-class ApiAuthToken
+class Admin
 {
     /**
      * Handle an incoming request.
@@ -18,14 +16,14 @@ class ApiAuthToken
      */
     public function handle(Request $request, Closure $next)
     {
-        $attempt = RequestApi::callAPI('POST', 'login', $request->all(), false);
-
-        if ($attempt->success) {
-            Cookie::queue('token', $attempt->data->token, 1200);
-
-            return $next($request);
+        if (!auth()->check()) {
+            abort(403);
         }
-        
-        return back()->withErrors($attempt->data);
+
+        if (!auth()->user()->type) {
+            abort(403);
+        }
+
+        return $next($request);
     }
 }

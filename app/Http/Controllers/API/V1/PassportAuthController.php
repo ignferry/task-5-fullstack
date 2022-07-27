@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 
@@ -60,6 +61,7 @@ class PassportAuthController extends BaseController
     {
         $token = $request->user()->token();
         $token->revoke();
-        return $this->sendResponse([], 'Logout succesful');
+
+        return $this->sendResponse([], 'Logout successful');
     }
 }

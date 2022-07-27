@@ -28,7 +28,20 @@ class DatabaseSeeder extends Seeder
             'name' => 'Sports'
         ]);
 
-        User::factory(5)->create();
+        User::create([
+            'name' => 'admin',
+            'email' => 'admin@gmail.com',
+            'password' => bcrypt('password'),
+            'type' => 1
+        ]);
+
+        User::create([
+            'name' => 'user',
+            'email' => 'user@gmail.com',
+            'password' => bcrypt('password')
+        ]);
+
+        User::factory(3)->create();
 
         Article::factory(20)->create();
     }

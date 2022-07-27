@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Models\Category;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
@@ -25,17 +26,17 @@ class CategoryController extends BaseController
      * @param  \App\Http\Requests\StoreCategoryRequest  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreCategoryRequest $request)
+    public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255'
+            'name' => 'required|string|max:255|unique:categories'
         ]);
 
         if ($validator->fails()) {
             return $this->sendError('Validation Error', $validator->errors(), 400);
         }
 
-        Category::create(['name' => $request->category]);
+        Category::create(['name' => $request->name]);
 
         return $this->sendResponse([], 'Category created successfully');
     }
@@ -58,7 +59,7 @@ class CategoryController extends BaseController
      * @param  \App\Models\Category  $category
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateCategoryRequest $request, Category $category)
+    public function update(Request $request, Category $category)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255'

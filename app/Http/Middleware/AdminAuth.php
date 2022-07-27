@@ -22,7 +22,7 @@ class AdminAuth
         }
         else {
             $message = ['message' => 'Permission Denied'];
-            return response($message, 401);
+            return abort(403);
         }
     }
 }
