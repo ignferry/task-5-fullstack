@@ -6,7 +6,6 @@ use App\Http\Controllers\Frontend\Dashboard\DashboardController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Frontend\Home\HomeController;
-use App\Http\Controllers\Frontend\Home\HomeArticleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,15 +19,13 @@ use App\Http\Controllers\Frontend\Home\HomeArticleController;
 */
 
 Route::get('/', [HomeController::class, 'index']);
-Route::get('/home', [HomeController::class, 'index'])->name('home');
-
-Route::get('/articles', [HomeArticleController::class, 'index'])->name('homeArticles');
-Route::get('/articles/{article:id}', [HomeArticleController::class, 'show']);
+Route::get('/articles', [HomeController::class, 'index'])->name('homeArticles');
+Route::get('/articles/{article:id}', [HomeController::class, 'show']);
 
 Auth::routes();
 
 Route::get('/dashboard', [DashboardController::class, 'index'])->middleware('auth');
 Route::resource('/dashboard/articles', DashboardArticleController::class)->middleware('auth');
-Route::resource('/dashboard/categories', DashboardCategoryController::class)->middleware('admin');
+Route::resource('/dashboard/categories', DashboardCategoryController::class)->except(['create', 'edit'])->middleware('admin');
 
 

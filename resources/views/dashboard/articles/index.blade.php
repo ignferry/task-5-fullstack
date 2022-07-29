@@ -19,7 +19,6 @@
         <table class="table table-striped table-sm">
           <thead>
             <tr>
-              <th scope="col">#</th>
               <th scope="col">Title</th>
               <th scope="col">Category</th>
               @can('admin')
@@ -31,7 +30,6 @@
           <tbody>
             @foreach ($articles as $article)
               <tr>
-                <td>{{ $loop->iteration }}</td>
                 <td>{{ $article->title }}</td>
                 <td>
                   @if($article->category)
