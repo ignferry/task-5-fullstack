@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Frontend\Dashboard;
 
-use App\Http\Controllers\Controller;
-use App\Http\Helper\RequestApi;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use App\Http\Helper\RequestApi;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Http;
 
 class DashboardCategoryController extends Controller
 {
@@ -16,15 +17,13 @@ class DashboardCategoryController extends Controller
      */
     public function index()
     {
-        $apiCall = RequestApi::callAPI('GET', 'categories', [], false);
+        $response = Http::get(env('API_URL') . 'categories');
 
-        if (!$apiCall->success) {
-            return view('dashboard.index', [
-                'message' => $apiCall->message
-            ]);
+        if (!$response->successful()) {
+            return abort($response->status());
         }
 
-        $categories = $apiCall->data;
+        $categories = json_decode($response);
 
         return view('dashboard.categories.index', [
             'categories' => $categories
@@ -39,13 +38,13 @@ class DashboardCategoryController extends Controller
      */
     public function store(Request $request)
     {
-        $apiCall = RequestApi::callAPI('POST', 'categories', $request->all(), true);
+        $response = Http::withToken(request()->cookie('token'))->post(env('API_URL') . 'categories', $request->all());
 
-        if (!$apiCall->success) {
-            return back()->with('message', $apiCall->message);
+        if (!$response->successful()) {
+            return back()->withErrors;
         }
 
-        return redirect('/dashboard/categories');
+        return redirect('/dashboard/categories')->with('message', 'Category created successfully');
     }
 
     /**
@@ -57,13 +56,12 @@ class DashboardCategoryController extends Controller
      */
     public function update(Request $request, Category $category)
     {
-        $apiCall = RequestApi::callAPI('PUT', 'categories/' . $category->id, $request->all(), true);
-
-        if (!$apiCall->success) {
-            return redirect('/dashboard');
+        $response = Http::withToken(request()->cookie('token'))->put(env('API_URL') . 'categories/' . $category->id, $request->all());
+        if (!$response->successful()) {
+            return back()->withErrors;
         }
 
-        return redirect('/dashboard/categories');
+        return redirect('/dashboard/categories')->with('message', 'Category updated successfully');
     }
 
     /**
@@ -74,13 +72,11 @@ class DashboardCategoryController extends Controller
      */
     public function destroy(Category $category)
     {
-
-        $apiCall = RequestApi::callAPI('DELETE', 'categories/' . $category->id, [], true);
-
-        if (!$apiCall->success) {
-            return redirect('/dashboard');
+        $response = Http::withToken(request()->cookie('token'))->delete(env('API_URL') . 'categories/' . $category->id);
+        if (!$response->successful()) {
+            return abort($response->status());
         }
 
-        return redirect('/dashboard/categories');
+        return redirect('/dashboard/categories')->with('message', 'Category deleted successfully');
     }
 }

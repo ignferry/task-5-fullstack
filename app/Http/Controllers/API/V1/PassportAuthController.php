@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\API\V1;
 
+use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 
-class PassportAuthController extends BaseController
+class PassportAuthController extends Controller
 {
     public function register(Request $request)
     {
@@ -19,17 +19,22 @@ class PassportAuthController extends BaseController
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError('Validation Error', $validator->errors());
+            return response()->json([
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 400);
         }
 
-        $user = User::create([
+        User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => bcrypt($request->password),
             'type' => 0
         ]);
 
-        return $this->sendResponse([], 'Registration successful');
+        return response()->json([
+            'message' => 'Registration successful'
+        ], 200);
     }
 
     public function login(Request $request)
@@ -40,7 +45,10 @@ class PassportAuthController extends BaseController
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError('Validation Error', $validator->errors());
+            return response()->json([
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 400);
         }
 
         $validatedData = [
@@ -50,10 +58,15 @@ class PassportAuthController extends BaseController
 
         if (auth()->attempt($validatedData)) {
             $token = auth()->user()->createToken('RakaminBlog')->accessToken;
-            return $this->sendResponse(['token' => $token], 'Login successful');
+            return response()->json([
+                'token' => $token,
+                'message' => 'Login successful'
+            ], 200);
         }
         else {
-            return $this->sendError('Invalid Credentials', ['message' => 'Invalid Credentials']);
+            return response()->json([
+                'message' => 'Invalid Credentials'
+            ], 401);
         }
     }
 
@@ -62,6 +75,6 @@ class PassportAuthController extends BaseController
         $token = $request->user()->token();
         $token->revoke();
 
-        return $this->sendResponse([], 'Logout successful');
+        return response()->json([], 204);
     }
 }

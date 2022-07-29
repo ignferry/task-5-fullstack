@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use App\Http\Helper\RequestApi;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cookie;
 
 class ApiRevokeToken
@@ -18,7 +19,7 @@ class ApiRevokeToken
      */
     public function handle(Request $request, Closure $next)
     {
-        $attempt = RequestApi::callAPI('POST', 'logout', [], true);
+        Http::withToken(request()->cookie('token'))->post(env('API_URL') . 'logout');
 
         $cookie = Cookie::forget('token');
 

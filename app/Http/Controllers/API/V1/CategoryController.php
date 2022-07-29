@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers\API\V1;
 
+use App\Http\Controllers\Controller;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Requests\StoreCategoryRequest;
-use App\Http\Requests\UpdateCategoryRequest;
 
-class CategoryController extends BaseController
+class CategoryController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -17,7 +16,7 @@ class CategoryController extends BaseController
      */
     public function index()
     {
-        return $this->sendResponse(Category::all(), 'Categories retrieved successfully');
+        return response(Category::all(), 200);
     }
 
     /**
@@ -33,12 +32,17 @@ class CategoryController extends BaseController
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError('Validation Error', $validator->errors(), 400);
+            return response()->json([
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 400);
         }
 
         Category::create(['name' => $request->name]);
 
-        return $this->sendResponse([], 'Category created successfully');
+        return response()->json([
+            'message' => 'Category created successfully'
+        ], 201);
     }
 
     /**
@@ -49,7 +53,7 @@ class CategoryController extends BaseController
      */
     public function show(Category $category)
     {
-        return $this->sendResponse($category, 'Category retrieved successfully');
+        return response()->json($category, 200);
     }
 
     /**
@@ -62,16 +66,19 @@ class CategoryController extends BaseController
     public function update(Request $request, Category $category)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255'
+            'name' => 'required|string|max:255|unique:categories'
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError('Validation Error', $validator->errors(), 400);
+            return response()->json([
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 400);
         }
 
         Category::where('id', $category->id)->update(['name' => $request->name]);
 
-        return $this->sendResponse([], 'Category updated successfully');
+        return response()->json([], 204);
     }
 
     /**
@@ -84,6 +91,6 @@ class CategoryController extends BaseController
     {
         $category->delete();
 
-        return $this->sendResponse([], 'Category deleted successfully');
+        return response()->json([], 204);
     }
 }

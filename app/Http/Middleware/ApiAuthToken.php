@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use App\Http\Helper\RequestApi;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cookie;
 
 class ApiAuthToken
@@ -18,14 +18,14 @@ class ApiAuthToken
      */
     public function handle(Request $request, Closure $next)
     {
-        $attempt = RequestApi::callAPI('POST', 'login', $request->all(), false);
+        $response = Http::post(env('API_URL') . 'login', $request->all());
+        $responseData = json_decode($response);
 
-        if ($attempt->success) {
-            Cookie::queue('token', $attempt->data->token, 1200);
-
+        if ($response->successful()) {
+            Cookie::queue('token', $responseData->token);
             return $next($request);
         }
         
-        return back()->withErrors($attempt->data);
+        return back()->withErrors($responseData);
     }
 }

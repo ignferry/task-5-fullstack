@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers\API\V1;
 
+use App\Http\Controllers\Controller;
 use App\Models\Article;
 use Illuminate\Http\Request;
 use App\Http\Resources\ArticleResource;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Requests\StoreArticleRequest;
-use App\Http\Requests\UpdateArticleRequest;
+use App\Http\Resources\ArticleNoContentResource;
 
-class ArticleController extends BaseController
+class ArticleController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -19,14 +19,11 @@ class ArticleController extends BaseController
      */
     public function index()
     {
-        $articles = Article::select(
-            'id', 'title', 'image', 'user_id', 'category_id', 'created_at'
-        )
-        ->filter(request(['user_id']))
-        ->paginate(9)
-        ->withQueryString();
+        $articles = Article::filter(request(['user_id']))
+        ->latest()
+        ->paginate(9);
 
-        return $this->sendResponse($articles, 'Articles retrieved successfully');
+        return response()->json(ArticleNoContentResource::collection($articles)->response()->getData(), 200);
     }
 
     /**
@@ -38,7 +35,9 @@ class ArticleController extends BaseController
     public function store(Request $request)
     {
         if (auth('api')->user()->id != $request->user_id) {
-            return $this->sendError('Permission Denied', [], 401);
+            return response()->json([
+                'message' => 'Permission denied'
+            ], 403);
         }
 
         $validator = Validator::make($request->all(), [
@@ -49,7 +48,10 @@ class ArticleController extends BaseController
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError('Validation Error', $validator->errors(), 400);
+            return response()->json([
+                'message' => 'Validation Error',
+                'errors' => $validator->errors()
+            ], 400);
         }
 
         $validatedData = [
@@ -65,7 +67,9 @@ class ArticleController extends BaseController
 
         Article::create($validatedData);
 
-        return $this->sendResponse([], 'Article created successfully');
+        return response()->json([
+            'message' => 'Article created successfully'
+        ], 201);
     }
 
     /**
@@ -76,7 +80,7 @@ class ArticleController extends BaseController
      */
     public function show(Article $article)
     {
-        return $this->sendResponse($article, 'Article retrieved successfully');
+        return response()->json(new ArticleResource($article), 200);
     }
 
     /**
@@ -89,7 +93,9 @@ class ArticleController extends BaseController
     public function update(Request $request, Article $article)
     {
         if (auth('api')->user()->id != $article->user_id && auth('api')->user()->type == 0) {
-            return $this->sendError('Permission Denied', [], 401);
+            return response()->json([
+                'message' => 'Permission denied'
+            ], 403);
         }
 
         $validator = Validator::make($request->all(), [
@@ -100,7 +106,10 @@ class ArticleController extends BaseController
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError('Validation Error', $validator->errors(), 400);
+            return response()->json([
+                'message' => 'Validation Error',
+                'errors' => $request->all()
+            ], 400);
         }
 
         $validatedData = [
@@ -119,7 +128,7 @@ class ArticleController extends BaseController
 
         Article::where('id', $article->id)->update($validatedData);
 
-        return $this->sendResponse([], 'Article updated successfully');
+        return response()->json([], 204);
     }
 
     /**
@@ -131,7 +140,9 @@ class ArticleController extends BaseController
     public function destroy(Article $article)
     {
         if (auth('api')->user()->id != $article->user_id && auth('api')->user()->type == 0) {
-            return $this->sendError('Permission Denied', [], 401);
+           return response()->json([
+                'message' => 'Permission denied'
+            ], 403);
         }
 
         if ($article->image) {
@@ -140,6 +151,6 @@ class ArticleController extends BaseController
 
         $article->delete();
 
-        return $this->sendResponse([], 'Article deleted successfully');
+        return response()->json([], 204);
     }
 }

@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Frontend\Dashboard;
 
-use App\Http\Controllers\Controller;
 use App\Models\Article;
 use Illuminate\Http\Request;
-use App\Http\Helper\RequestApi;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Http;
 
 class DashboardArticleController extends Controller
 {
@@ -16,26 +16,27 @@ class DashboardArticleController extends Controller
      */
     public function index()
     {
+        // Limit articles visible to normal users
         $apiData = [];
         if (auth()->user()->type == 0) {
             $apiData['user_id'] = auth()->user()->id;
         }
 
+        // Pagination
         if (request('page')) {
             $apiData['page'] = request('page');
         }
+        
+        $response = Http::get(env('API_URL') . 'articles', $apiData);
 
-        $apiCall = RequestApi::callAPI('GET', 'articles', $apiData, false);
-
-        if (!$apiCall->success) {
-            return view('dashboard.index', [
-                'message' => $apiCall->message
-            ]);
+        if (!$response->successful()) {
+            return abort($response->status());
         }
 
-        $articles = $apiCall->data->data;
-        $paginationData = $apiCall->data;
-        $paginationData->data = null;
+        $responseData = json_decode($response);
+
+        $articles = $responseData->data;
+        $paginationData = $responseData->meta;
 
         return view('dashboard.articles.index', [
             'articles' => $articles,
@@ -50,15 +51,15 @@ class DashboardArticleController extends Controller
      */
     public function create()
     {
-        $apiCall = RequestApi::callAPI('GET', 'categories', [], false);
+        // Get categories
+        $categoriesResponse = Http::get(env('API_URL') . 'categories');
 
-        if (!$apiCall->success) {
-            return view('dashboard.index', [
-                'message' => $apiCall->message
-            ]);
+        if (!$categoriesResponse->successful()) {
+            return back()->withErrors;
         }
 
-        $categories = $apiCall->data;
+        $categories = json_decode($categoriesResponse);
+
         return view('dashboard.articles.create', [
             'categories' => $categories
         ]);
@@ -74,15 +75,24 @@ class DashboardArticleController extends Controller
     {
         $apiData = $request->all();
         $apiData['user_id'] = auth()->user()->id;
-        $apiCall = RequestApi::callAPI('POST', 'articles', $apiData, true);
 
-        if ($apiCall->message == "Unauthenticated.") {
-            return view('home.home', [
-                'message' => $apiCall->message
-            ]);
+        $response = '';
+
+        if ($request->file('image')) {
+            $response = Http::withToken(request()->cookie('token'))
+                            ->attach('image', file_get_contents($request->file('image')), 'image')
+                            ->post(env('API_URL') . 'articles', $apiData);
+        }
+        else {
+            $response = Http::withToken(request()->cookie('token'))
+                            ->post(env('API_URL') . 'articles', $apiData);
         }
 
-        return redirect('/dashboard/articles')->with('message', $apiCall->message);
+        if (!$response->successful()) {
+            return abort($response->status());
+        }
+
+        return redirect('/dashboard/articles')->with('message', 'Article created successfully');
     }
 
     /**
@@ -93,16 +103,16 @@ class DashboardArticleController extends Controller
      */
     public function show(Article $article)
     {
-        $apiCall = RequestApi::callAPI('GET', 'articles/' . $article->id, [], false);
+        $response = Http::get(env('API_URL') . 'articles/' . $article->id);
 
-        if (!$apiCall->success) {
-            return back()->with('message', $apiCall->message);
+        if (!$response->successful()) {
+            return abort($response->status());
         }
 
-        $article = $apiCall->data;
+        $article = json_decode($response);
 
-        if ($article->user_id != auth()->user()->id && auth()->user()->type == 0) {
-            return redirect('/dashboard/articles');
+        if ($article->user->id != auth()->user()->id && auth()->user()->type == 0) {
+            return abort(404);
         }
 
         return view('dashboard.articles.show', [
@@ -118,28 +128,27 @@ class DashboardArticleController extends Controller
      */
     public function edit(Article $article)
     {
-        $apiCallCategories = RequestApi::callAPI('GET', 'categories', [], false);
+        // Get categories
+        $categoriesResponse = Http::get(env('API_URL') . 'categories');
 
-        if (!$apiCallCategories->success) {
-            return view('dashboard.index', [
-                'message' => $apiCallCategories->message
-            ]);
+        if (!$categoriesResponse->successful()) {
+            return redirect('/dashboard');
         }
 
-        $categories = $apiCallCategories->data;
+        $categories = json_decode($categoriesResponse);
 
-        $apiCallArticle = RequestApi::callAPI('GET', 'articles/' . $article->id, [], false);
+        // Get old article data
+        $response = Http::get(env('API_URL') . 'articles/' . $article->id);
 
-        if (!$apiCallArticle->success) {
-            return view('dashboard.index', [
-                'message' => $apiCallArticle->message
-            ]);
+        if (!$response->successful()) {
+            return abort(404);
         }
 
-        $article = $apiCallArticle->data;
+        $article = json_decode($response);
 
-        if ($article->user_id != auth()->user()->id && auth()->user()->type == 0) {
-            return redirect('/dashboard/articles');
+        // Only admin and article owner can edit
+        if ($article->user->id != auth()->user()->id && auth()->user()->type == 0) {
+            return abort(404);
         }
 
         return view('dashboard.articles.edit', [
@@ -157,18 +166,25 @@ class DashboardArticleController extends Controller
      */
     public function update(Request $request, Article $article)
     {
-        $apiCall = RequestApi::callAPI('PUT', 'articles/' . $article->id, $request->all(), true);
-        if ($apiCall->message == "Unauthenticated.") {
-            return view('home.home', [
-                'message' => $apiCall->message
-            ]);
+        $apiData = $request->all();
+        $apiData['user_id'] = auth()->user()->id;
+        $apiData['_method'] = 'PUT';
+
+        if ($request->file('image')) {
+            $response = Http::withToken(request()->cookie('token'))
+                            ->attach('image', file_get_contents($request->file('image')), 'image')
+                            ->post(env('API_URL') . 'articles/' . $article->id, $apiData);
+        }
+        else {
+            $response = Http::withToken(request()->cookie('token'))
+                            ->put(env('API_URL') . 'articles/' . $article->id, $apiData);
         }
 
-        if (!$apiCall->success) {
-            return back()->with('message', $apiCall->message);
+        if (!$response->successful()) {
+            return back()->withErrors;
         }
 
-        return redirect('/dashboard/articles')->with('message', $apiCall->message);
+        return redirect('/dashboard/articles')->with('message', 'Article updated successfully');
     }
 
     /**
@@ -179,18 +195,12 @@ class DashboardArticleController extends Controller
      */
     public function destroy(Article $article)
     {
-        $apiCall = RequestApi::callAPI('DELETE', 'articles/' . $article->id, [], true);
+        $response = Http::withToken(request()->cookie('token'))->delete(env('API_URL') . 'articles/' . $article->id);
 
-        if ($apiCall->message == "Unauthenticated.") {
-            return view('home.home', [
-                'message' => $apiCall->message
-            ]);
+        if (!$response->successful()) {
+            return abort($response->status());
         }
 
-        if (!$apiCall->success) {
-            return back()->with('message', $apiCall->message);
-        }
-
-        return redirect('/dashboard/articles')->with('message', $apiCall->message);
+        return redirect('/dashboard/articles')->with('message', 'Article deleted successfully');
     }
 }
