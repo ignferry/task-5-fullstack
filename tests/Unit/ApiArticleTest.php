@@ -6,6 +6,8 @@ use Tests\TestCase;
 use App\Models\User;
 use App\Models\Article;
 use App\Models\Category;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class ApiArticleTest extends TestCase
 {
@@ -99,11 +101,14 @@ class ApiArticleTest extends TestCase
 
         $category = $this->createTestCategory();
 
+        $image = UploadedFile::fake()->image('testImage.jpg');
+
         $response = $this
             ->actingAs($user, 'api')
             ->postJson(env('API_URL') . 'articles', [
                 'title' => 'testArticle',
                 'content' => '<p>Example content</p>',
+                'image' => $image,
                 'category_id' => 1,
                 'user_id' => 1
             ]);
@@ -126,11 +131,14 @@ class ApiArticleTest extends TestCase
         $category = $this->createTestCategory();
         $article = $this->createTestArticle();
 
+        $image = UploadedFile::fake()->image('testImage.jpg');
+
         $response = $this
             ->actingAs($user, 'api')
             ->putJson(env('API_URL') . 'articles/1', [
                 'title' => 'testArticleUpdated',
                 'content' => '<p>Updated example content</p>',
+                'image' => $image,
                 'category_id' => 1,
                 'user_id' => 1,
                 '_method' => 'PUT'

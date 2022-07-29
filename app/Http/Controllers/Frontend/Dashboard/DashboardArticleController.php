@@ -89,7 +89,7 @@ class DashboardArticleController extends Controller
         }
 
         if (!$response->successful()) {
-            return abort($response->status());
+            return back()->withErrors;
         }
 
         return redirect('/dashboard/articles')->with('message', 'Article created successfully');
