@@ -168,7 +168,7 @@ class DashboardArticleTest extends TestCase
 
     public function test_show()
     {
-        $user = User::create($this->userTestData(1, true));
+        $user = User::create($this->userTestData(1, false));
 
         Category::create([
             'name' => 'testCategory'
@@ -193,7 +193,7 @@ class DashboardArticleTest extends TestCase
 
     public function test_edit()
     {
-        $user = User::create($this->userTestData(1, true));
+        $user = User::create($this->userTestData(1, false));
 
         Category::create([
             'name' => 'testCategory'
@@ -217,7 +217,7 @@ class DashboardArticleTest extends TestCase
 
     public function test_update()
     {
-        $user = User::create($this->userTestData(1, true));
+        $user = User::create($this->userTestData(1, false));
 
         Category::create([
             'name' => 'testCategory'
@@ -249,7 +249,7 @@ class DashboardArticleTest extends TestCase
 
     public function test_destroy()
     {
-        $user = User::create($this->userTestData(1, true));
+        $user = User::create($this->userTestData(1, false));
 
         Category::create([
             'name' => 'testCategory'
