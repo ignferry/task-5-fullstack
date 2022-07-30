@@ -40,8 +40,10 @@ class DashboardCategoryController extends Controller
     {
         $response = Http::withToken(request()->cookie('token'))->post(env('API_URL') . 'categories', $request->all());
 
+        $responseData = json_decode($response);
+
         if (!$response->successful()) {
-            return back()->withErrors;
+            return back()->withErrors($responseData->errors);
         }
 
         return redirect('/dashboard/categories')->with('message', 'Category created successfully');
@@ -57,8 +59,10 @@ class DashboardCategoryController extends Controller
     public function update(Request $request, Category $category)
     {
         $response = Http::withToken(request()->cookie('token'))->put(env('API_URL') . 'categories/' . $category->id, $request->all());
+        $responseData = json_decode($response);
+
         if (!$response->successful()) {
-            return back()->withErrors;
+            return back()->withErrors($responseData->errors);
         }
 
         return redirect('/dashboard/categories')->with('message', 'Category updated successfully');

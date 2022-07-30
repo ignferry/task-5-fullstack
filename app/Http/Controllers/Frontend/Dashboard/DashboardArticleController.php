@@ -54,11 +54,11 @@ class DashboardArticleController extends Controller
         // Get categories
         $categoriesResponse = Http::get(env('API_URL') . 'categories');
 
-        if (!$categoriesResponse->successful()) {
-            return back()->withErrors;
-        }
-
         $categories = json_decode($categoriesResponse);
+
+        if (!$categoriesResponse->successful()) {
+            return back()->withErrors($categories->errors);
+        }
 
         return view('dashboard.articles.create', [
             'categories' => $categories
@@ -88,8 +88,10 @@ class DashboardArticleController extends Controller
                             ->post(env('API_URL') . 'articles', $apiData);
         }
 
+        $responseData = json_decode($response);
+
         if (!$response->successful()) {
-            return back()->withErrors;
+            return back()->withErrors($responseData->errors);
         }
 
         return redirect('/dashboard/articles')->with('message', 'Article created successfully');
@@ -170,6 +172,8 @@ class DashboardArticleController extends Controller
         $apiData['user_id'] = auth()->user()->id;
         $apiData['_method'] = 'PUT';
 
+        $response = '';
+
         if ($request->file('image')) {
             $response = Http::withToken(request()->cookie('token'))
                             ->attach('image', file_get_contents($request->file('image')), 'image')
@@ -180,8 +184,10 @@ class DashboardArticleController extends Controller
                             ->put(env('API_URL') . 'articles/' . $article->id, $apiData);
         }
 
+        $responseData = json_decode($response);
+
         if (!$response->successful()) {
-            return back()->withErrors;
+            return back()->withErrors($responseData->errors);
         }
 
         return redirect('/dashboard/articles')->with('message', 'Article updated successfully');

@@ -31,7 +31,12 @@
               </div>
               <div class="modal-body">
                 <label for="newCategoryName" class="col-form-label">Enter new category name: </label>
-                <input type="text" name="name" id="newCategoryName" class="form-control">
+                <input type="text" name="name" id="newCategoryName" class="form-control @error('name') is-invalid @enderror" required>
+                @error('name')
+                <div class="invalid-feedback">
+                    {{ $message }}
+                </div>
+                @enderror
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -72,7 +77,12 @@
                           </div>
                           <div class="modal-body">
                             <label for="updatedCategoryName{{ $category->name }}" class="col-form-label">Enter new category name: </label>
-                            <input type="text" name="name" id="updatedCategoryName{{ $category->name }}" class="form-control">
+                            <input type="text" name="name" id="updatedCategoryName{{ $category->name }}" class="form-control @error('name') is-invalid @enderror" required>
+                            @error('name')
+                            <div class="invalid-feedback">
+                                {{ $message }}
+                            </div>
+                            @enderror
                           </div>
                           <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
