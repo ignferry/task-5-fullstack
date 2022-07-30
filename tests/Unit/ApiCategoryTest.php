@@ -74,6 +74,10 @@ class ApiCategoryTest extends TestCase
             ->assertJson([
                 'message' => 'Category created successfully'
             ]);
+
+        $this->assertDatabaseHas('categories', [
+            'name' => 'testCategory'
+        ]);
     }
 
     public function test_update()
@@ -94,6 +98,14 @@ class ApiCategoryTest extends TestCase
             ]);
 
         $response->assertStatus(204);
+
+        $this->assertDatabaseHas('categories', [
+            'name' => 'updatedTestCategory'
+        ]);
+
+        $this->assertDatabaseMissing('categories', [
+            'name' => 'testCategory1'
+        ]);
     }
 
     public function test_delete()
@@ -112,5 +124,9 @@ class ApiCategoryTest extends TestCase
             ->deleteJson(env('API_URL') . 'categories/1');
 
         $response->assertStatus(204);
+
+        $this->assertDatabaseMissing('categories', [
+            'name' => 'testCategory1'
+        ]);
     }
 }

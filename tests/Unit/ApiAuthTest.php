@@ -26,6 +26,11 @@ class ApiAuthTest extends TestCase
             ->assertJson([
                 'message' => 'Registration successful'
             ]);
+
+        $this->assertDatabaseHas('users', [
+            'name' => 'testRegister',
+            'email' => 'testregister@gmail.com'
+        ]);
     }
 
     public function test_login()

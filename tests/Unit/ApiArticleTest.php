@@ -7,7 +7,6 @@ use App\Models\User;
 use App\Models\Article;
 use App\Models\Category;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 class ApiArticleTest extends TestCase
 {
@@ -118,6 +117,13 @@ class ApiArticleTest extends TestCase
             ->assertJson([
                 'message' => 'Article created successfully'
             ]);
+
+        $this->assertDatabaseHas('articles', [
+            'title' => 'testArticle',
+            'content' => '<p>Example content</p>',
+            'category_id' => 1,
+            'user_id' => 1
+        ]);
     }
     
     public function test_update()
@@ -145,6 +151,18 @@ class ApiArticleTest extends TestCase
             ]);
 
         $response->assertStatus(204);
+
+        $this->assertDatabaseMissing('articles',[
+            'title' => 'testArticle',
+            'content' => '<p>Example content</p>'
+        ]);
+
+        $this->assertDatabaseHas('articles', [
+            'title' => 'testArticleUpdated',
+            'content' => '<p>Updated example content</p>',
+            'category_id' => 1,
+            'user_id' => 1,
+        ]);
     }
     public function test_delete()
     {
@@ -162,5 +180,12 @@ class ApiArticleTest extends TestCase
             ->deleteJson(env('API_URL') . 'articles/1');
 
         $response->assertStatus(204);
+
+        $this->assertDatabaseMissing('articles', [
+            'title' => 'testArticle',
+            'content' => '<p>Example content</p>',
+            'category_id' => 1,
+            'user_id' => 1
+        ]);
     }
 }
